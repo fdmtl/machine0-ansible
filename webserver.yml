@@ -1,0 +1,21 @@
+---
+# =============================================================================
+# Webserver Playbook
+# Deploys nginx in Docker with UFW firewall
+# Usage: bun production:cli provision <vm> webserver.yml
+# =============================================================================
+
+- hosts: all
+  gather_facts: true
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  roles:
+    - role: docker-app
+      vars:
+        docker_app_name: nginx
+        docker_app_image: nginx:alpine
+        docker_app_ports:
+          - "80:80"
+        docker_app_firewall_enabled: true
+        docker_app_firewall_ports:
+          - "80"

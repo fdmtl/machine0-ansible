@@ -1,0 +1,17 @@
+---
+- name: Validate required variables
+  ansible.builtin.assert:
+    that:
+      - docker_app_name | length > 0
+      - docker_app_image | length > 0
+    fail_msg: "docker_app_name and docker_app_image are required"
+
+- name: Ensure Docker is installed
+  import_tasks: ensure-docker.yml
+
+- name: Deploy container
+  import_tasks: deploy.yml
+
+- name: Configure firewall
+  import_tasks: firewall.yml
+  when: docker_app_firewall_enabled

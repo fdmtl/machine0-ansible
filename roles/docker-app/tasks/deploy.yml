@@ -1,0 +1,43 @@
+---
+- name: Pull Docker image
+  ansible.builtin.command: docker pull {{ docker_app_image }}
+  register: docker_pull
+  changed_when: "'Downloaded newer image' in docker_pull.stdout or 'Pull complete' in docker_pull.stdout"
+
+- name: Check if container exists
+  ansible.builtin.command: docker inspect {{ docker_app_name }}
+  register: container_inspect
+  changed_when: false
+  failed_when: false
+
+- name: Stop existing container
+  ansible.builtin.command: docker stop {{ docker_app_name }}
+  when: container_inspect.rc == 0
+  changed_when: true
+
+- name: Remove existing container
+  ansible.builtin.command: docker rm {{ docker_app_name }}
+  when: container_inspect.rc == 0
+  changed_when: true
+
+- name: Build docker run command
+  ansible.builtin.set_fact:
+    _docker_run_cmd: >-
+      docker run -d
+      --name {{ docker_app_name }}
+      --restart {{ docker_app_restart_policy }}
+      {% for port in docker_app_ports %}-p {{ port }} {% endfor %}
+      {% for key, value in docker_app_env.items() %}-e '{{ key }}={{ value }}' {% endfor %}
+      {% for vol in docker_app_volumes %}-v {{ vol }} {% endfor %}
+      {{ docker_app_extra_args }}
+      {{ docker_app_image }}
+
+- name: Start container
+  ansible.builtin.command: "{{ _docker_run_cmd }}"
+  changed_when: true
+
+- name: Verify container is running
+  ansible.builtin.command: docker inspect -f '{{ '{{' }}.State.Running{{ '}}' }}' {{ docker_app_name }}
+  register: container_running
+  changed_when: false
+  failed_when: container_running.stdout != 'true'
