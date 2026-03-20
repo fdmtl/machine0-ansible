@@ -6,7 +6,7 @@
   args:
     executable: /bin/bash
   register: nemoclaw_install
-  changed_when: nemoclaw_install.rc == 0
+  changed_when: "'installed' in nemoclaw_install.stdout"
 
 - name: Ensure ~/.bun/bin is on PATH in .zshrc
   ansible.builtin.lineinfile:
