@@ -11,8 +11,8 @@
   vars:
     ansible_python_interpreter: /usr/bin/python3
   roles:
-    # - role: 01-core-packages
-    # - role: 02-shell
+    - role: 01-core-packages
+    - role: 02-shell
     - role: 04-claws
       vars:
         open_claw: true
@@ -28,7 +28,7 @@
           Run the onboarding command for each to get started:
 
           $ openclaw onboard --install-daemon
-          $ nemoclaw my-assistant connect
+          $ nemoclaw onboard
           $ cd ~/nanoclaw && claude    (then run /setup)
           $ metaclaw setup
           $ zeroclaw onboard
