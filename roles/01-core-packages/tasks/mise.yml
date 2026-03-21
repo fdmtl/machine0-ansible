@@ -48,6 +48,8 @@
 - name: Install runtime tools via mise
   ansible.builtin.command:
     cmd: "mise use --global {{ item }}"
+  environment:
+    MISE_PYTHON_PRECOMPILED_FLAVOR: "install_only_stripped"
   loop:
     - node@lts
     - bun@latest
