@@ -2,7 +2,7 @@
 - name: Install Claude Code globally via npm
   ansible.builtin.shell: |
     eval "$(mise activate bash)"
-    npm install -g @anthropic-ai/claude-code
+    npm install -g @anthropic-ai/claude-code@2.1.81
   args:
     executable: /bin/bash
   register: claude_install

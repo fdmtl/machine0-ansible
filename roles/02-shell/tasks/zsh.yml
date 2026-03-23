@@ -19,12 +19,33 @@
   changed_when: false
   failed_when: false
 
-- name: Install starship
+# Checksums from https://github.com/starship/starship/releases/tag/v1.24.2
+- name: Set starship arch variables
+  ansible.builtin.set_fact:
+    starship_arch_map:
+      x86_64:
+        asset: "starship-x86_64-unknown-linux-gnu.tar.gz"
+        checksum: "sha256:3f12f61883ff324c1dbe7b885fa125d5490960e5cad6a12eeaa34695ec1b5744"
+      aarch64:
+        asset: "starship-aarch64-unknown-linux-musl.tar.gz"
+        checksum: "sha256:56b9ff412bbf374d29b99e5ac09a849124cb37a0a13121e8470df32de53c1ea6"
+  when: starship_check.rc != 0
+
+- name: Download starship binary
   become: true
-  ansible.builtin.shell: |
-    curl -sS https://starship.rs/install.sh | sh -s -- -y
-  args:
-    creates: /usr/local/bin/starship
+  ansible.builtin.get_url:
+    url: "https://github.com/starship/starship/releases/download/v1.24.2/{{ starship_arch_map[ansible_facts['architecture']].asset }}"
+    dest: /tmp/starship.tar.gz
+    checksum: "{{ starship_arch_map[ansible_facts['architecture']].checksum }}"
+    mode: "0644"
+  when: starship_check.rc != 0
+
+- name: Extract and install starship
+  become: true
+  ansible.builtin.unarchive:
+    src: /tmp/starship.tar.gz
+    dest: /usr/local/bin
+    remote_src: true
   when: starship_check.rc != 0
 
 - name: Set user shell to zsh

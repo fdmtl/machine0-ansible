@@ -11,10 +11,26 @@
     path: /etc/apt/keyrings/mise-archive-keyring.gpg
   register: mise_gpg_key
 
-- name: Download and install mise GPG key
+- name: Download mise GPG key
   become: true
-  ansible.builtin.shell:
-    cmd: curl -fsSL https://mise.jdx.dev/gpg-key.pub | gpg --dearmor -o /etc/apt/keyrings/mise-archive-keyring.gpg
+  ansible.builtin.get_url:
+    url: https://mise.jdx.dev/gpg-key.pub
+    dest: /tmp/mise-key.pub
+    mode: "0644"
+  when: not mise_gpg_key.stat.exists
+
+- name: Verify mise GPG key fingerprint
+  ansible.builtin.shell: |
+    gpg --dry-run --import --import-options import-show /tmp/mise-key.pub 2>&1 | grep -q "24853EC9F655CE80B48E6C3A8B81C9D17413A06D"
+  register: gpg_check
+  failed_when: gpg_check.rc != 0
+  changed_when: false
+  when: not mise_gpg_key.stat.exists
+
+- name: Install mise GPG key
+  become: true
+  ansible.builtin.shell: |
+    gpg --dearmor -o /etc/apt/keyrings/mise-archive-keyring.gpg < /tmp/mise-key.pub
   when: not mise_gpg_key.stat.exists
 
 - name: Set mise GPG key permissions
@@ -51,12 +67,12 @@
   environment:
     MISE_PYTHON_PRECOMPILED_FLAVOR: "install_only_stripped"
   loop:
-    - node@lts
-    - bun@latest
-    - python@latest
-    - uv@latest
-    - pipx@latest
-    - rust@latest
-    - go@latest
+    - node@22.12.0
+    - bun@1.1.42
+    - python@3.13.1
+    - uv@0.5.11
+    - pipx@1.7.1
+    - rust@1.83.0
+    - go@1.23.4
   register: mise_install
   changed_when: "'installed' in mise_install.stderr or 'installed' in mise_install.stdout"
