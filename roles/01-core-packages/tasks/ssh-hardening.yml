@@ -1,0 +1,14 @@
+---
+# Write to sshd_config.d so our settings take precedence over the main sshd_config
+# (Ubuntu 24.04 includes sshd_config.d/* first, and first-value-wins)
+- name: Deploy SSH hardening config
+  become: true
+  ansible.builtin.copy:
+    dest: /etc/ssh/sshd_config.d/01-hardening.conf
+    content: |
+      PasswordAuthentication no
+      KbdInteractiveAuthentication no
+      PermitRootLogin no
+      X11Forwarding no
+    mode: "0644"
+  notify: Restart sshd

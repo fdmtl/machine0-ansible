@@ -1,0 +1,20 @@
+---
+- name: Ensure sshd privsep directory exists
+  become: true
+  ansible.builtin.file:
+    path: /run/sshd
+    state: directory
+    mode: "0755"
+  listen: Restart sshd
+
+- name: Validate sshd config
+  become: true
+  ansible.builtin.command: sshd -t
+  changed_when: false
+  listen: Restart sshd
+
+- name: Restart sshd
+  become: true
+  ansible.builtin.service:
+    name: ssh
+    state: restarted

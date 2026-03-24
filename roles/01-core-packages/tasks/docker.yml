@@ -24,6 +24,7 @@
   ansible.builtin.get_url:
     url: https://download.docker.com/linux/ubuntu/gpg
     dest: /etc/apt/keyrings/docker.asc
+    checksum: "sha256:1500c1f56fa9e26b9b8f42452a553675796ade0807cdce11975eb98170b3a570"
     mode: "0644"
   when: not docker_gpg_key.stat.exists
 
@@ -52,6 +53,9 @@
     state: present
     update_cache: true
 
+# NOTE: Docker group membership grants effective root access via container escape.
+# This is an accepted trade-off for developer VMs. For production workloads,
+# consider Docker rootless mode.
 - name: Add user to docker group
   become: true
   ansible.builtin.user:

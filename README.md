@@ -49,4 +49,4 @@ $ ansible-playbook -i "<IP>," -u ubuntu base.yml
 | **Build Tools** | build-essential, cmake, pkg-config |
 | **CLI Essentials** | git, vim, curl, wget, jq, htop, btop, fzf, ripgrep, unzip, p7zip |
 | **Shell** | Zsh with [Starship](https://starship.rs) prompt, eza, zoxide, autosuggestions, syntax highlighting |
-| **Other** | Ansible, PostgreSQL client, screen, fastfetch |
+| **Other** | screen, fastfetch |

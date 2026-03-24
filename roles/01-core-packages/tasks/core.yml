@@ -8,12 +8,6 @@
       - pkg-config
     state: present
 
-- name: Install ansible
-  become: true
-  ansible.builtin.apt:
-    name: ansible
-    state: present
-
 - name: Install shell and CLI tools
   become: true
   ansible.builtin.apt:
@@ -30,6 +24,4 @@
       - btop
       - fzf
       - ripgrep
-      - postgresql-client
-      - cups
     state: present

@@ -13,3 +13,6 @@
 
 - name: Install AI agents
   import_tasks: agents.yml
+
+- name: Harden SSH configuration
+  import_tasks: ssh-hardening.yml
