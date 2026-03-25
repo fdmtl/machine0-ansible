@@ -72,7 +72,7 @@
   environment:
     MISE_PYTHON_PRECOMPILED_FLAVOR: "install_only_stripped"
   loop:
-    - node@22.12.0
+    - node@22.16.0
     - bun@1.1.42
     - python@3.13.1
     - uv@0.5.11
