@@ -77,7 +77,7 @@
     - python@3.13.1
     - uv@0.5.11
     - pipx@1.7.1
-    - rust@1.83.0
+    - rust@1.94.0
     - go@1.23.4
   register: mise_install
   changed_when: "'installed' in mise_install.stderr or 'installed' in mise_install.stdout"

@@ -2,7 +2,7 @@
 - name: Install ZeroClaw via cargo
   ansible.builtin.shell: |
     eval "$(mise activate bash)"
-    cargo install zeroclaw
+    cargo install zeroclaw --locked
   args:
     executable: /bin/bash
   register: zeroclaw_install
