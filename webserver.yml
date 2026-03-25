@@ -1,21 +1,55 @@
 ---
 # =============================================================================
-# Webserver Playbook
-# Deploys nginx in Docker with UFW firewall
-# Usage: bun production:cli provision <vm> webserver.yml
+# Fileserver Playbook
+# Deploys a static file server in Docker with directory listing of ~/public
+# Usage: machine0 provision <vm> fileserver.yml
 # =============================================================================
 
 - hosts: all
   gather_facts: true
   vars:
     ansible_python_interpreter: /usr/bin/python3
+
+  pre_tasks:
+    - name: Create public directory
+      ansible.builtin.file:
+        path: "{{ ansible_env.HOME }}/public"
+        state: directory
+        mode: "0755"
+
+    - name: Create example.txt
+      ansible.builtin.copy:
+        dest: "{{ ansible_env.HOME }}/public/example.txt"
+        content: "This is an example file served by the fileserver.\n"
+        mode: "0644"
+
+    - name: Create nginx autoindex config
+      ansible.builtin.copy:
+        dest: "{{ ansible_env.HOME }}/nginx-fileserver.conf"
+        content: |
+          server {
+              listen 80;
+              listen [::]:80;
+              server_name _;
+              location / {
+                  root /usr/share/nginx/html;
+                  autoindex on;
+              }
+          }
+        mode: "0644"
+
   roles:
+    - role: 01-core-packages
+    - role: 02-shell
     - role: docker-app
       vars:
-        docker_app_name: nginx
+        docker_app_name: fileserver
         docker_app_image: nginx:alpine
         docker_app_ports:
           - "80:80"
+        docker_app_volumes:
+          - "{{ ansible_env.HOME }}/public:/usr/share/nginx/html:ro"
+          - "{{ ansible_env.HOME }}/nginx-fileserver.conf:/etc/nginx/conf.d/default.conf:ro"
         docker_app_firewall_enabled: true
         docker_app_firewall_ports:
           - "80"
