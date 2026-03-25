@@ -23,9 +23,20 @@ This playbook installs dev tools, runtimes, Docker, AI coding agents and a moder
 | `claws.yml` | `xl` (8 GB) | NemoClaw's dependency tree needs the RAM |
 | `webserver.yml` | `small` (1 GB) | Lightweight web server |
 
+## Building Images
+
+Build a ready-to-use image from any playbook in one command:
+
+```bash
+$ ./make-image.sh base.yml small              # → image: base-260325-1430
+$ ./make-image.sh claws.yml xl v2             # → image: claws-v2
+```
+
+This creates a temporary VM, provisions it, snapshots it to an image, and cleans up the VM automatically. If anything fails, the VM is removed by a cleanup trap.
+
 ## Provisioning
 
-Using the machine0 CLI:
+To provision an existing VM (without imaging):
 
 ```bash
 $ machine0 new my-vm --size xl
