@@ -4,15 +4,6 @@
 #
 
 #
-# Nix
-#
-[[ -f /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh ]] && \
-  . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
-
-# Claude Code (installed via npm prefix)
-export PATH="$HOME/.npm-global/bin:$PATH"
-
-#
 # Platform Detection
 #
 IS_MACOS=false
@@ -66,7 +57,7 @@ bindkey '^[[B' history-search-forward
 #
 # Aliases - General
 #
-alias json='python -m json.tool'
+alias json='python3 -m json.tool'
 alias cd='z'
 alias l='eza -l --icons'
 alias ll='ls -lGh'

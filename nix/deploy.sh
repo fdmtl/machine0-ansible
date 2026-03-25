@@ -51,7 +51,7 @@ ANSIBLE_HOST_KEY_CHECKING=false ansible-playbook -i "$IP," -u "$SSH_USER" \
 
 echo "==> Step 2: Copy flake to remote"
 rsync -avz \
-  -e "ssh ${SSH_ARGS[*]}" \
+  -e "ssh $(printf '%q ' "${SSH_ARGS[@]}")" \
   "$SCRIPT_DIR/" "$SSH_USER@$IP:$REMOTE_DIR/"
 
 echo "==> Step 3: Build and activate home-manager on remote"

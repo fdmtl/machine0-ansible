@@ -53,8 +53,8 @@
     autosuggestion.enable = true;
     syntaxHighlighting.enable = true;
     initExtra = builtins.readFile ./files/init.zsh;
-    profileExtra = ''
-      # Ensure nix is on PATH for login shells (SSH commands, scripts)
+    envExtra = ''
+      # Ensure nix is on PATH for all shell types (login, interactive, scripts)
       if [ -f /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh ]; then
         . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
       fi

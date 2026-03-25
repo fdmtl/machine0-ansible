@@ -9,17 +9,11 @@
     };
   };
 
-  outputs = { nixpkgs, home-manager, ... }:
-    let
-      # Build on the target VM, so system is determined at eval time.
-      # Support both x86_64 and aarch64.
-      mkHome = system: home-manager.lib.homeManagerConfiguration {
-        pkgs = import nixpkgs { inherit system; };
-        modules = [ ./home.nix ];
-      };
-    in {
-      # deploy.sh uses: nix run home-manager -- switch --flake .#ubuntu
-      homeConfigurations.ubuntu = mkHome "x86_64-linux";
-      homeConfigurations.ubuntu-arm = mkHome "aarch64-linux";
+  outputs = { nixpkgs, home-manager, ... }: {
+    # deploy.sh uses: nix run home-manager -- switch --flake .#ubuntu
+    homeConfigurations.ubuntu = home-manager.lib.homeManagerConfiguration {
+      pkgs = import nixpkgs { system = "x86_64-linux"; };
+      modules = [ ./home.nix ];
     };
+  };
 }

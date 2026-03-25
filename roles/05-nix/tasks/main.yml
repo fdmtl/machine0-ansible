@@ -10,7 +10,7 @@
     - name: Determine installer architecture and checksum
       ansible.builtin.set_fact:
         nix_installer_arch: "{{ ansible_facts['architecture'] }}-linux"
-        nix_installer_checksum: "{{ (ansible_facts['architecture'] == 'x86_64') | ternary('sha256:8f94f26d7c89fd8d654dd96703f2c3ad54f3e9b60a577a34caa7a3ce1aa81168', 'sha256:5a23d463b095012e32513f89f3a495c1c859b2b3f83ba0d2f90f0b582ba7dddd') }}"
+        nix_installer_checksum: "sha256:8f94f26d7c89fd8d654dd96703f2c3ad54f3e9b60a577a34caa7a3ce1aa81168"
 
     - name: Download Determinate Systems nix-installer
       become: true
@@ -25,7 +25,7 @@
       ansible.builtin.command:
         cmd: /tmp/nix-installer install linux --no-confirm
       register: nix_install
-      changed_when: nix_install.rc == 0
+      changed_when: true
 
   always:
     - name: Clean up nix-installer binary
@@ -46,6 +46,7 @@
   become: true
   ansible.builtin.lineinfile:
     path: /etc/nix/nix.conf
+    regexp: '^experimental-features\s*='
     line: "experimental-features = nix-command flakes"
     create: true
     mode: "0644"
