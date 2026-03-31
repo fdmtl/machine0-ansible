@@ -16,3 +16,6 @@
 
 - name: Harden SSH configuration
   import_tasks: ssh-hardening.yml
+
+- name: Harden VM
+  import_tasks: hardening.yml
