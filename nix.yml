@@ -1,17 +1,18 @@
 ---
 # =============================================================================
-# Nix Bootstrap Playbook
-# Installs nix, system-level services (Docker, SSH, MOTD), and sets zsh as
-# login shell. User-level packages and shell config are managed by home-manager
-# via nix/deploy.sh after this playbook runs.
+# Nix Provisioning Playbook
+# Single-command provisioning: installs nix, copies the flake, sets up system
+# services (Docker, SSH, MOTD), builds with home-manager, and installs Claude
+# Code. System hardening completes before the potentially-long nix build.
 #
-# Usage: ansible-playbook -i "IP," -u ubuntu nix.yml
+# Usage: machine0 provision <vm> nix.yml
 # =============================================================================
 
 - hosts: all
   gather_facts: true
   vars:
     ansible_python_interpreter: /usr/bin/python3
+    claude_code_version: "2.1.87"
   tasks:
     # 1. Install zsh first (needed before setting as login shell)
     - name: Ensure zsh is installed
@@ -28,8 +29,8 @@
         name: "{{ ansible_user }}"
         shell: /usr/bin/zsh
 
-    # 3. Install nix daemon + enable flakes
-    - name: Install nix
+    # 3. Install nix daemon + enable flakes + copy flake to remote
+    - name: Install nix and copy flake
       import_role:
         name: 05-nix
 
@@ -49,3 +50,51 @@
     - name: Configure MOTD
       import_role:
         name: 03-motd
+
+    # Flush handlers (Restart sshd, etc.) so hardening is live before long builds
+    - name: Flush handlers before long builds
+      ansible.builtin.meta: flush_handlers
+
+    # 7. Activate home-manager (after system services, long nix build)
+    - name: Run home-manager switch
+      ansible.builtin.shell:
+        cmd: |
+          . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
+          cd ~/.machine0-nix
+          nix run home-manager/release-24.11 -- switch --flake .#ubuntu -b backup
+        executable: /bin/bash
+      register: hm_switch
+      changed_when: hm_switch.rc == 0
+
+    # 8. Claude Code (npm global, outside nix)
+    - name: Install Claude Code
+      ansible.builtin.shell:
+        cmd: |
+          . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
+          export PATH="$HOME/.npm-global/bin:$PATH"
+          WANT="{{ claude_code_version }}"
+          GOT="$(claude --version 2>/dev/null || echo none)"
+          if ! echo "$GOT" | grep -qF "$WANT"; then
+            mkdir -p ~/.npm-global
+            npm install -g --prefix ~/.npm-global "@anthropic-ai/claude-code@$WANT"
+          fi
+        executable: /bin/bash
+      register: claude_install
+      changed_when: "'added' in claude_install.stdout or 'changed' in claude_install.stdout"
+
+  post_tasks:
+    - name: Verify provisioning
+      ansible.builtin.shell:
+        cmd: |
+          . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
+          export PATH="$HOME/.npm-global/bin:$PATH"
+          FAIL=0
+          for cmd in nix gcc cmake git node bun python3 uv pipx rustc cargo go starship eza claude docker; do
+            command -v $cmd >/dev/null 2>&1 || { echo "MISSING: $cmd"; FAIL=1; }
+          done
+          [ "$(getent passwd $(whoami) | cut -d: -f7)" = "/usr/bin/zsh" ] || { echo "FAIL: login shell not zsh"; FAIL=1; }
+          sudo sshd -T 2>/dev/null | grep -qi "passwordauthentication no" || { echo "FAIL: SSH not hardened"; FAIL=1; }
+          [ -f /etc/update-motd.d/00-machine0-header ] || { echo "FAIL: MOTD missing"; FAIL=1; }
+          exit $FAIL
+        executable: /bin/bash
+      changed_when: false

@@ -12,7 +12,28 @@ diverse install methods (npm, git+bun, pip, cargo). NemoClaw requires xl (8 GB) 
 The webserver/fileserver playbooks use the docker-app role which would need a nix
 equivalent for container management.
 
-**Depends on:** nix base deployment being stable and proven in production.
+**Depends on:** nix.yml provisioning being stable (consolidated in single command as of this PR).
+
+## Evaluate system-manager to replace ansible root tasks
+
+[system-manager](https://github.com/numtide/system-manager) (numtide, v1.1, Jan 2026) can
+manage `/etc` files, systemd services, users/groups, and system packages on non-NixOS Linux
+using Nix. This could replace all remaining ansible root tasks for the nix path:
+
+- Docker daemon + CLI + compose + buildx via `environment.systemPackages` + `systemd.services`
+- SSH hardening via `environment.etc."ssh/sshd_config.d/..."`
+- MOTD via `environment.etc."update-motd.d/..."` + `environment.systemPackages = [ pkgs.fastfetch ]`
+- Login shell + docker group via `users.users` / `users.groups` (powered by userborn)
+
+**Result:** Eliminate ansible entirely for the nix path. One flake, one language (nix),
+declarative rollback via generations.
+
+**Trade-offs:** system-manager is v1.1 (young vs battle-tested ansible). Requires manually
+defining Docker's systemd service (~40 lines) rather than `apt install docker-ce`. Kernel
+settings (sysctl, modules-load) written to `/etc/` but need reboot to take effect. No
+`virtualisation.docker.enable = true` convenience module yet.
+
+**Depends on:** nix.yml provisioning being stable.
 
 ## Supply Chain: Pin remaining unpinned dependencies
 

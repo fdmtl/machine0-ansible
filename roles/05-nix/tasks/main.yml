@@ -52,3 +52,12 @@
     mode: "0644"
   when: flakes_enabled.rc != 0
   notify: Restart nix-daemon
+
+- name: Flush handlers to restart nix-daemon before using nix
+  ansible.builtin.meta: flush_handlers
+
+- name: Copy flake to remote
+  ansible.builtin.copy:
+    src: flake/
+    dest: ~/.machine0-nix/
+    mode: preserve

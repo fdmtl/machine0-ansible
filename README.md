@@ -13,7 +13,7 @@ This playbook installs dev tools, runtimes, Docker, AI coding agents and a moder
 | `openclaw.yml` | Base + [OpenClaw](https://github.com/openclawai/OpenClaw) agent framework |
 | `claws.yml` | Base + all 5 claw agent frameworks (OpenClaw, NemoClaw, NanoClaw, MetaClaw, ZeroClaw) |
 | `webserver.yml` | Base + web server setup |
-| `nix.yml` | Nix bootstrap — zsh, nix daemon, Docker, SSH hardening, MOTD. Use with `nix/deploy.sh` |
+| `nix.yml` | Nix provisioning — zsh, nix daemon, home-manager flake, Claude Code, Docker, SSH hardening, MOTD |
 
 ## Recommended VM Sizes
 
@@ -23,7 +23,7 @@ This playbook installs dev tools, runtimes, Docker, AI coding agents and a moder
 | `openclaw.yml` | `small` (1 GB) | Single npm package |
 | `claws.yml` | `xl` (8 GB) | NemoClaw's dependency tree needs the RAM |
 | `webserver.yml` | `small` (1 GB) | Lightweight web server |
-| `nix.yml` + `deploy.sh` | `medium` (2 GB) | Nix builds may compile from source |
+| `nix.yml` | `medium` (2 GB) | Nix builds may compile from source |
 
 ## Building Images
 
@@ -57,14 +57,14 @@ An alternative to the Ansible-only `base.yml`, using [Nix](https://nixos.org/) f
 
 ```bash
 $ machine0 new my-vm --size medium
-$ cd nix && ./deploy.sh my-vm
+$ machine0 provision my-vm nix.yml
 ```
 
-This runs `nix.yml` (bootstrap: nix daemon, Docker, SSH, MOTD) then activates the home-manager flake (all dev tools, runtimes, shell config). Works from macOS or a GitHub runner — builds happen on the target VM.
+This installs nix, copies the home-manager flake, builds all dev tools and shell config, installs Claude Code, and sets up system services (Docker, SSH, MOTD). Builds happen on the target VM.
 
 ## What's Installed
 
-> The table below describes `base.yml`. The nix path (`nix/deploy.sh`) installs an equivalent set of packages via [nixpkgs](https://search.nixos.org/packages) instead of mise/apt. Minor differences: `fastfetch` is still installed by the `03-motd` Ansible role; `chafa`, `powerline`, and `inetutils` are added by the nix flake.
+> The table below describes `base.yml`. The nix path (`nix.yml`) installs an equivalent set of packages via [nixpkgs](https://search.nixos.org/packages) instead of mise/apt. Minor differences: `fastfetch` is still installed by the `03-motd` Ansible role; `chafa`, `powerline`, and `inetutils` are added by the nix flake.
 
 | Category | Packages |
 |---|---|

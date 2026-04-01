@@ -10,7 +10,7 @@
   };
 
   outputs = { nixpkgs, home-manager, ... }: {
-    # deploy.sh uses: nix run home-manager -- switch --flake .#ubuntu
+    # ansible runs: nix run home-manager -- switch --flake .#ubuntu
     homeConfigurations.ubuntu = home-manager.lib.homeManagerConfiguration {
       pkgs = import nixpkgs { system = "x86_64-linux"; };
       modules = [ ./home.nix ];
