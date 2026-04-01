@@ -1,0 +1,51 @@
+---
+# =============================================================================
+# Nix Bootstrap Playbook
+# Installs nix, system-level services (Docker, SSH, MOTD), and sets zsh as
+# login shell. User-level packages and shell config are managed by home-manager
+# via nix/deploy.sh after this playbook runs.
+#
+# Usage: ansible-playbook -i "IP," -u ubuntu nix.yml
+# =============================================================================
+
+- hosts: all
+  gather_facts: true
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  tasks:
+    # 1. Install zsh first (needed before setting as login shell)
+    - name: Ensure zsh is installed
+      become: true
+      ansible.builtin.apt:
+        name: zsh
+        state: present
+        update_cache: true
+
+    # 2. Set zsh as login shell (needs root; home-manager can't do this)
+    - name: Set zsh as default shell
+      become: true
+      ansible.builtin.user:
+        name: "{{ ansible_user }}"
+        shell: /usr/bin/zsh
+
+    # 3. Install nix daemon + enable flakes
+    - name: Install nix
+      import_role:
+        name: 05-nix
+
+    # 4. Docker (reuse existing, needs root/systemd)
+    - name: Install Docker
+      import_role:
+        name: 01-core-packages
+        tasks_from: docker.yml
+
+    # 5. SSH hardening (reuse existing, needs root)
+    - name: Harden SSH
+      import_role:
+        name: 01-core-packages
+        tasks_from: ssh-hardening.yml
+
+    # 6. MOTD (reuse existing, needs root for /etc/update-motd.d/)
+    - name: Configure MOTD
+      import_role:
+        name: 03-motd

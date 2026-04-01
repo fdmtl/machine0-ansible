@@ -13,6 +13,7 @@ This playbook installs dev tools, runtimes, Docker, AI coding agents and a moder
 | `openclaw.yml` | Base + [OpenClaw](https://github.com/openclawai/OpenClaw) agent framework |
 | `claws.yml` | Base + all 5 claw agent frameworks (OpenClaw, NemoClaw, NanoClaw, MetaClaw, ZeroClaw) |
 | `webserver.yml` | Base + web server setup |
+| `nix.yml` | Nix bootstrap — zsh, nix daemon, Docker, SSH hardening, MOTD. Use with `nix/deploy.sh` |
 
 ## Recommended VM Sizes
 
@@ -22,6 +23,7 @@ This playbook installs dev tools, runtimes, Docker, AI coding agents and a moder
 | `openclaw.yml` | `small` (1 GB) | Single npm package |
 | `claws.yml` | `xl` (8 GB) | NemoClaw's dependency tree needs the RAM |
 | `webserver.yml` | `small` (1 GB) | Lightweight web server |
+| `nix.yml` + `deploy.sh` | `medium` (2 GB) | Nix builds may compile from source |
 
 ## Building Images
 
@@ -49,7 +51,20 @@ Or directly with Ansible:
 $ ansible-playbook -i "<IP>," -u ubuntu base.yml
 ```
 
+## Nix-Based Provisioning
+
+An alternative to the Ansible-only `base.yml`, using [Nix](https://nixos.org/) flakes and [home-manager](https://github.com/nix-community/home-manager) for reproducible package management:
+
+```bash
+$ machine0 new my-vm --size medium
+$ cd nix && ./deploy.sh my-vm
+```
+
+This runs `nix.yml` (bootstrap: nix daemon, Docker, SSH, MOTD) then activates the home-manager flake (all dev tools, runtimes, shell config). Works from macOS or a GitHub runner — builds happen on the target VM.
+
 ## What's Installed
+
+> The table below describes `base.yml`. The nix path (`nix/deploy.sh`) installs an equivalent set of packages via [nixpkgs](https://search.nixos.org/packages) instead of mise/apt. Minor differences: `fastfetch` is still installed by the `03-motd` Ansible role; `chafa`, `powerline`, and `inetutils` are added by the nix flake.
 
 | Category | Packages |
 |---|---|
