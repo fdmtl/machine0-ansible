@@ -64,14 +64,14 @@
           nix run home-manager/release-24.11 -- switch --flake .#ubuntu -b backup
         executable: /bin/bash
       register: hm_switch
-      changed_when: hm_switch.rc == 0
+      changed_when: true
 
     # 8. Claude Code (npm global, outside nix)
     - name: Install Claude Code
       ansible.builtin.shell:
         cmd: |
           . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
-          export PATH="$HOME/.npm-global/bin:$PATH"
+          export PATH="$HOME/.nix-profile/bin:$HOME/.npm-global/bin:$PATH"
           WANT="{{ claude_code_version }}"
           GOT="$(claude --version 2>/dev/null || echo none)"
           if ! echo "$GOT" | grep -qF "$WANT"; then
@@ -87,7 +87,7 @@
       ansible.builtin.shell:
         cmd: |
           . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
-          export PATH="$HOME/.npm-global/bin:$PATH"
+          export PATH="$HOME/.nix-profile/bin:$HOME/.npm-global/bin:$PATH"
           FAIL=0
           for cmd in nix gcc cmake git node bun python3 uv pipx rustc cargo go starship eza claude docker; do
             command -v $cmd >/dev/null 2>&1 || { echo "MISSING: $cmd"; FAIL=1; }

@@ -56,6 +56,11 @@
 - name: Flush handlers to restart nix-daemon before using nix
   ansible.builtin.meta: flush_handlers
 
+- name: Remove stale flake directory before copy
+  ansible.builtin.file:
+    path: ~/.machine0-nix/
+    state: absent
+
 - name: Copy flake to remote
   ansible.builtin.copy:
     src: flake/
