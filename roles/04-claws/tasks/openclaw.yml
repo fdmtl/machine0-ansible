@@ -1,4 +1,14 @@
 ---
+- name: Check if OpenClaw is already installed at correct version
+  ansible.builtin.shell: |
+    eval "$(mise activate bash)"
+    npm list -g openclaw --depth=0 2>/dev/null | grep -q 'openclaw@2026.3.28'
+  args:
+    executable: /bin/bash
+  register: openclaw_check
+  changed_when: false
+  failed_when: false
+
 - name: Install OpenClaw globally via npm
   ansible.builtin.shell: |
     eval "$(mise activate bash)"
@@ -6,4 +16,13 @@
   args:
     executable: /bin/bash
   register: openclaw_install
-  changed_when: "'added' in openclaw_install.stdout or 'up to date' not in openclaw_install.stderr"
+  changed_when: "'added' in openclaw_install.stdout"
+  when: openclaw_check.rc != 0
+
+- name: Verify OpenClaw installed version
+  ansible.builtin.shell: |
+    eval "$(mise activate bash)"
+    npm list -g openclaw --depth=0 2>/dev/null | grep -q 'openclaw@2026.3.28'
+  args:
+    executable: /bin/bash
+  changed_when: false

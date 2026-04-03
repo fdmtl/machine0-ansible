@@ -24,3 +24,9 @@
   ansible.builtin.service:
     name: fail2ban
     state: restarted
+
+- name: Restart nix-daemon
+  become: true
+  ansible.builtin.service:
+    name: nix-daemon
+    state: restarted

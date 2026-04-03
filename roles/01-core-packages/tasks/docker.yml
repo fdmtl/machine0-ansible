@@ -41,15 +41,22 @@
     filename: docker
     state: present
 
+- name: Assert Ubuntu version is 24.04 (Docker version pins are release-specific)
+  ansible.builtin.assert:
+    that: ansible_distribution_version == "24.04"
+    msg: >-
+      Docker version pins are Ubuntu 24.04-specific.
+      Update version strings in docker.yml for {{ ansible_distribution_version }}.
+
 - name: Install Docker packages
   become: true
   ansible.builtin.apt:
     name:
-      - docker-ce
-      - docker-ce-cli
-      - containerd.io
-      - docker-buildx-plugin
-      - docker-compose-plugin
+      - docker-ce=5:29.3.1-1~ubuntu.24.04~noble
+      - docker-ce-cli=5:29.3.1-1~ubuntu.24.04~noble
+      - containerd.io=2.2.2-1~ubuntu.24.04~noble
+      - docker-buildx-plugin=0.33.0-1~ubuntu.24.04~noble
+      - docker-compose-plugin=5.1.1-1~ubuntu.24.04~noble
     state: present
     update_cache: true
 

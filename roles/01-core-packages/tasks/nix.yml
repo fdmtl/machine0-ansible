@@ -1,0 +1,48 @@
+---
+- name: Check if nix is already installed
+  ansible.builtin.stat:
+    path: /nix/store
+  register: nix_store
+
+- name: Install nix
+  when: not nix_store.stat.exists
+  block:
+    - name: Determine installer architecture and checksum
+      ansible.builtin.set_fact:
+        nix_installer_arch: "{{ ansible_facts['architecture'] }}-linux"
+        nix_installer_checksum: >-
+          sha256:{{ (ansible_facts['architecture'] == 'x86_64')
+            | ternary('8f94f26d7c89fd8d654dd96703f2c3ad54f3e9b60a577a34caa7a3ce1aa81168',
+                      '5a23d463b095012e32513f89f3a495c1c859b2b3f83ba0d2f90f0b582ba7dddd') }}
+
+    - name: Download Determinate Systems nix-installer
+      become: true
+      ansible.builtin.get_url:
+        url: "https://github.com/DeterminateSystems/nix-installer/releases/download/v3.17.1/nix-installer-{{ nix_installer_arch }}"
+        dest: /tmp/nix-installer
+        checksum: "{{ nix_installer_checksum }}"
+        mode: "0755"
+
+    - name: Run nix-installer
+      become: true
+      ansible.builtin.command:
+        cmd: /tmp/nix-installer install linux --no-confirm
+      register: nix_install
+      changed_when: true
+
+  always:
+    - name: Clean up nix-installer binary
+      become: true
+      ansible.builtin.file:
+        path: /tmp/nix-installer
+        state: absent
+
+- name: Ensure flakes are enabled in nix.conf
+  become: true
+  ansible.builtin.lineinfile:
+    path: /etc/nix/nix.conf
+    regexp: '^experimental-features\s*='
+    line: "experimental-features = nix-command flakes"
+    create: true
+    mode: "0644"
+  notify: Restart nix-daemon

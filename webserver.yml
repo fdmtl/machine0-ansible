@@ -50,6 +50,14 @@
         docker_app_volumes:
           - "{{ ansible_env.HOME }}/public:/usr/share/nginx/html:ro"
           - "{{ ansible_env.HOME }}/nginx-fileserver.conf:/etc/nginx/conf.d/default.conf:ro"
-        docker_app_firewall_enabled: true
-        docker_app_firewall_ports:
+    - role: 06-firewall
+      vars:
+        firewall_allowed_tcp_ports:
+          - "22"
           - "80"
+
+  post_tasks:
+    - name: Reboot the machine
+      become: true
+      ansible.builtin.reboot:
+        reboot_timeout: 300

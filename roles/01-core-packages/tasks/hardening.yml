@@ -1,4 +1,17 @@
 ---
+- name: Disable unnecessary services
+  become: true
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    enabled: false
+    state: stopped
+    masked: true
+  loop:
+    - cups
+    - cups-browsed
+    - avahi-daemon
+  failed_when: false
+
 - name: Install fail2ban
   become: true
   ansible.builtin.apt:
@@ -15,7 +28,7 @@
       port = ssh
       maxretry = 5
       findtime = 600
-      bantime = 3600
+      bantime = 86400
       backend = systemd
     mode: "0644"
   notify: Restart fail2ban

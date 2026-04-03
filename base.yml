@@ -13,6 +13,10 @@
     - role: 01-core-packages
     - role: 02-shell
     - role: 03-motd
+    - role: 06-firewall
+      vars:
+        firewall_allowed_tcp_ports:
+          - "22"
 
   post_tasks:
     - name: Reboot the machine

@@ -24,6 +24,11 @@
           $ openclaw onboard --install-daemon
 
           Note: it'll take ~60s to startup the first time, don't kill the process.
+    - role: 06-firewall
+      vars:
+        firewall_allowed_tcp_ports:
+          - "22"
+          - "80"
 
   post_tasks:
     - name: Reboot the machine

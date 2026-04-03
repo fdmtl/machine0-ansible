@@ -2,8 +2,9 @@
 # =============================================================================
 # Nix Provisioning Playbook
 # Single-command provisioning: installs nix, copies the flake, sets up system
-# services (Docker, SSH, MOTD), builds with home-manager, and installs Claude
-# Code. System hardening completes before the potentially-long nix build.
+# services (Docker, SSH, MOTD, Webserver), builds with home-manager, and
+# installs Claude Code. System hardening completes before the potentially-long
+# nix build.
 #
 # Usage: machine0 provision <vm> nix.yml
 # =============================================================================
@@ -13,12 +14,44 @@
   vars:
     ansible_python_interpreter: /usr/bin/python3
     claude_code_version: "2.1.87"
+
+  pre_tasks:
+    # Webserver setup: create public directory, test file, nginx config
+    - name: Create public directory
+      ansible.builtin.file:
+        path: "{{ ansible_env.HOME }}/public"
+        state: directory
+        mode: "0755"
+
+    - name: Create example.txt
+      ansible.builtin.copy:
+        dest: "{{ ansible_env.HOME }}/public/example.txt"
+        content: "This is an example file served by the fileserver.\n"
+        mode: "0644"
+
+    - name: Create nginx autoindex config
+      ansible.builtin.copy:
+        dest: "{{ ansible_env.HOME }}/nginx-fileserver.conf"
+        content: |
+          server {
+              listen 80;
+              listen [::]:80;
+              server_name _;
+              location / {
+                  root /usr/share/nginx/html;
+                  autoindex on;
+              }
+          }
+        mode: "0644"
+
   tasks:
-    # 1. Install zsh first (needed before setting as login shell)
-    - name: Ensure zsh is installed
+    # 1. Install zsh + git (git needed for nix flake fetches / make.sh builds)
+    - name: Ensure zsh and git are installed
       become: true
       ansible.builtin.apt:
-        name: zsh
+        name:
+          - zsh
+          - git
         state: present
         update_cache: true
 
@@ -40,6 +73,10 @@
         name: 01-core-packages
         tasks_from: docker.yml
 
+    # Pick up docker group membership before running docker commands
+    - name: Reset SSH connection for docker group
+      ansible.builtin.meta: reset_connection
+
     # 5. SSH hardening (reuse existing, needs root)
     - name: Harden SSH
       import_role:
@@ -55,7 +92,29 @@
     - name: Flush handlers before long builds
       ansible.builtin.meta: flush_handlers
 
-    # 7. Activate home-manager (after system services, long nix build)
+    # 7. Deploy webserver (nginx in Docker, serves ~/public on port 80)
+    - name: Deploy webserver
+      import_role:
+        name: docker-app
+      vars:
+        docker_app_name: fileserver
+        docker_app_image: nginx:alpine
+        docker_app_ports:
+          - "80:80"
+        docker_app_volumes:
+          - "{{ ansible_env.HOME }}/public:/usr/share/nginx/html:ro"
+          - "{{ ansible_env.HOME }}/nginx-fileserver.conf:/etc/nginx/conf.d/default.conf:ro"
+
+    # 8. Configure firewall (declarative: reset + rebuild)
+    - name: Configure firewall
+      import_role:
+        name: 06-firewall
+      vars:
+        firewall_allowed_tcp_ports:
+          - "22"
+          - "80"
+
+    # 9. Activate home-manager (after system services, long nix build)
     - name: Run home-manager switch
       ansible.builtin.shell:
         cmd: |
@@ -66,7 +125,7 @@
       register: hm_switch
       changed_when: true
 
-    # 8. Claude Code (npm global, outside nix)
+    # 10. Claude Code (npm global, outside nix)
     - name: Install Claude Code
       ansible.builtin.shell:
         cmd: |
@@ -95,6 +154,8 @@
           [ "$(getent passwd $(whoami) | cut -d: -f7)" = "/usr/bin/zsh" ] || { echo "FAIL: login shell not zsh"; FAIL=1; }
           sudo sshd -T 2>/dev/null | grep -qi "passwordauthentication no" || { echo "FAIL: SSH not hardened"; FAIL=1; }
           [ -f /etc/update-motd.d/00-machine0-header ] || { echo "FAIL: MOTD missing"; FAIL=1; }
+          docker ps --filter name=fileserver --format '{{ '{{' }}.Status{{ '}}' }}' | grep -q "Up" || { echo "FAIL: fileserver container not running"; FAIL=1; }
+          curl -sf http://localhost/example.txt >/dev/null || { echo "FAIL: webserver not serving files"; FAIL=1; }
           exit $FAIL
         executable: /bin/bash
       changed_when: false

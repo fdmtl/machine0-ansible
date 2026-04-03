@@ -14,6 +14,9 @@
 - name: Install AI agents
   import_tasks: agents.yml
 
+- name: Install nix
+  import_tasks: nix.yml
+
 - name: Harden SSH configuration
   import_tasks: ssh-hardening.yml
 
