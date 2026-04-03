@@ -7,7 +7,3 @@ docker_app_env: {}
 docker_app_volumes: []
 docker_app_restart_policy: unless-stopped
 docker_app_extra_args: ""
-
-# Firewall settings
-docker_app_firewall_enabled: false
-docker_app_firewall_ports: []

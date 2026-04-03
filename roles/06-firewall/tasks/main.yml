@@ -5,20 +5,18 @@
     name: ufw
     state: present
 
-- name: Allow SSH (port 22) before any deny rules
+- name: Reset UFW to clean state
   become: true
   community.general.ufw:
-    rule: allow
-    port: "22"
-    proto: tcp
+    state: reset
 
-- name: Allow application ports
+- name: Allow configured TCP ports
   become: true
   community.general.ufw:
     rule: allow
     port: "{{ item }}"
     proto: tcp
-  loop: "{{ docker_app_firewall_ports }}"
+  loop: "{{ firewall_allowed_tcp_ports }}"
 
 - name: Set default deny incoming
   become: true

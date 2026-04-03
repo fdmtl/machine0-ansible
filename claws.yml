@@ -34,6 +34,10 @@
           $ zeroclaw onboard
 
           Note: first-time startup may take 30-60s for each agent.
+    - role: 06-firewall
+      vars:
+        firewall_allowed_tcp_ports:
+          - "22"
 
   post_tasks:
     - name: Reboot the machine
