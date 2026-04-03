@@ -10,7 +10,10 @@
     - name: Determine installer architecture and checksum
       ansible.builtin.set_fact:
         nix_installer_arch: "{{ ansible_facts['architecture'] }}-linux"
-        nix_installer_checksum: "sha256:8f94f26d7c89fd8d654dd96703f2c3ad54f3e9b60a577a34caa7a3ce1aa81168"
+        nix_installer_checksum: >-
+          sha256:{{ (ansible_facts['architecture'] == 'x86_64')
+            | ternary('8f94f26d7c89fd8d654dd96703f2c3ad54f3e9b60a577a34caa7a3ce1aa81168',
+                      '5a23d463b095012e32513f89f3a495c1c859b2b3f83ba0d2f90f0b582ba7dddd') }}
 
     - name: Download Determinate Systems nix-installer
       become: true
@@ -34,14 +37,6 @@
         path: /tmp/nix-installer
         state: absent
 
-- name: Check if flakes are already enabled
-  become: true
-  ansible.builtin.shell:
-    cmd: grep -qE '(^|extra-)experimental-features.*flakes' /etc/nix/nix.conf
-  register: flakes_enabled
-  changed_when: false
-  failed_when: false
-
 - name: Ensure flakes are enabled in nix.conf
   become: true
   ansible.builtin.lineinfile:
@@ -50,5 +45,4 @@
     line: "experimental-features = nix-command flakes"
     create: true
     mode: "0644"
-  when: flakes_enabled.rc != 0
   notify: Restart nix-daemon

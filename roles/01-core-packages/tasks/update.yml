@@ -1,11 +1,13 @@
 ---
 - name: Wait for unattended-upgrades to finish
   become: true
-  ansible.builtin.shell:
-    cmd: while fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do sleep 5; done
-  args:
-    executable: /bin/bash
+  ansible.builtin.command: fuser /var/lib/dpkg/lock-frontend
+  register: dpkg_lock
+  until: dpkg_lock.rc != 0
+  retries: 60
+  delay: 5
   changed_when: false
+  failed_when: false
 
 - name: Update apt cache
   become: true
